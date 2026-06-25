@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>us. — relationship check-in</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f9f8f6;
+    --surface: #ffffff;
+    --surface-2: #f3f2ef;
+    --border: #e8e6e1;
+    --border-strong: #d0cdc7;
+    --text: #1a1917;
+    --text-2: #6b6862;
+    --text-3: #a09c97;
+    --accent: #7c6ef7;
+    --accent-bg: #f0eeff;
+    --accent-border: #c9c3f8;
+    --accent-text: #4a3db8;
+    --warm: #e8704a;
+    --warm-bg: #fdf0eb;
+    --warm-border: #f5c4ae;
+    --warm-text: #9b3d1c;
+    --green: #3a9b6f;
+    --green-bg: #edf7f2;
+    --green-border: #a8dcbf;
+    --green-text: #1e6147;
+    --amber: #c97d1a;
+    --amber-bg: #fef6e8;
+    --amber-border: #f5d898;
+    --amber-text: #7a4a08;
+    --radius: 8px;
+    --radius-lg: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── Layout ── */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .sidebar-header {
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+  .logo span { color: var(--accent); }
+  .logo-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; letter-spacing: 0.02em; text-transform: uppercase; }
+
+  .partner-switcher {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 6px;
+  }
+  .partner-btn {
+    flex: 1;
+    padding: 6px 8px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-2);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .partner-btn.active {
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    color: var(--accent-text);
+  }
+
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 14px 16px 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: var(--text-2);
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    border-radius: 0;
+    transition: all 0.12s;
+    position: relative;
+  }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    font-weight: 500;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 4px; bottom: 4px;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 0 3px 3px 0;
+  }
+  .nav-item i { font-size: 16px; }
+
+  .badge {
+    margin-left: auto;
+    background: var(--warm-bg);
+    color: var(--warm-text);
+    border-radius: 20px;
+    padding: 1px 7px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .next-checkin-label { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+  .next-checkin-date { font-size: 14px; font-weight: 600; color: var(--text); margin-top: 3px; }
+  .next-checkin-days { font-size: 11px; color: var(--accent); margin-top: 1px; }
+
+  /* ── Main ── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .topbar-left h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+  .topbar-left p { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+  }
+
+  /* ── Views ── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── Components ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .card-icon {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .card-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .card-desc { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+  .stat-label { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat-val { font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; margin: 4px 0 2px; }
+  .stat-hint { font-size: 11px; color: var(--text-3); }
+
+  .sec-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin: 20px 0 10px;
+  }
+  .sec-label:first-child { margin-top: 0; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    transition: all 0.12s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--bg); border-color: var(--border-strong); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { opacity: 0.88; background: var(--accent); }
+  .btn-sm { padding: 6px 11px; font-size: 12px; }
+  .btn-danger { color: var(--warm-text); border-color: var(--warm-border); background: var(--warm-bg); }
+  .btn-danger:hover { background: var(--warm-border); }
+
+  /* Forms */
+  .field { margin-bottom: 12px; }
+  .field-label { font-size: 12px; font-weight: 500; color: var(--text-2); margin-bottom: 5px; display: block; }
+  textarea, input[type=text], input[type=date], input[type=email], select {
+    width: 100%;
+    padding: 9px 11px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+    transition: border-color 0.12s;
+  }
+  textarea:focus, input[type=text]:focus, input[type=date]:focus, input[type=email]:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+  textarea { resize: vertical; min-height: 72px; line-height: 1.6; }
+
+  /* Gratitude inputs */
+  .grat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 7px;
+  }
+  .grat-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    font-size: 11px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .grat-input {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 13px;
+    flex: 1;
+  }
+  .grat-input:focus { outline: none; }
+
+  /* Action items */
+  .action-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 6px;
+    transition: background 0.1s;
+  }
+  .action-item:hover { background: var(--surface-2); }
+  .action-item input[type=checkbox] {
+    width: 15px; height: 15px;
+    cursor: pointer;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+    padding: 0;
+  }
+  .action-text { flex: 1; font-size: 13px; color: var(--text); }
+  .action-text.done { text-decoration: line-through; color: var(--text-3); }
+  .action-owner { font-size: 11px; color: var(--text-3); padding: 2px 7px; background: var(--surface-2); border-radius: 20px; white-space: nowrap; }
+  .action-del { background: none; border: none; color: var(--text-3); cursor: pointer; font-size: 16px; padding: 2px; display: flex; align-items: center; opacity: 0.5; }
+  .action-del:hover { opacity: 1; color: var(--warm); }
+
+  /* Tags */
+  .tag { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+  .tag-pending { background: var(--amber-bg); color: var(--amber-text); }
+  .tag-done { background: var(--green-bg); color: var(--green-text); }
+  .tag-new { background: var(--accent-bg); color: var(--accent-text); }
+
+  /* AI box */
+  .ai-box {
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .ai-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent-text);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* History */
+  .timeline { position: relative; padding-left: 20px; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px; top: 8px; bottom: 8px;
+    width: 1px;
+    background: var(--border);
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+    cursor: pointer;
+  }
+  .timeline-dot {
+    position: absolute;
+    left: -17px; top: 5px;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--surface);
+  }
+  .timeline-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    transition: border-color 0.15s;
+  }
+  .timeline-card:hover { border-color: var(--accent-border); }
+  .timeline-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+  .timeline-date { font-size: 12px; font-weight: 600; color: var(--text); }
+  .timeline-chip { font-size: 11px; color: var(--text-3); background: var(--bg); border: 1px solid var(--border); padding: 1px 7px; border-radius: 20px; }
+  .timeline-summary { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+  .timeline-expand { display: none; margin-top: 12px; }
+  .timeline-expand.open { display: block; }
+  .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .history-field { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; }
+  .history-field-label { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+  .history-field-val { font-size: 12px; color: var(--text-2); line-height: 1.5; }
+
+  /* Growth log */
+  .growth-entry {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow);
+  }
+  .growth-date { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+  .growth-text { font-size: 13px; color: var(--text); }
+
+  /* Goal tracker */
+  .goal-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+  }
+  .goal-status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+  .goal-status-dot.active { background: var(--accent); }
+  .goal-status-dot.done { background: var(--green); }
+  .goal-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .goal-meta { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+  /* Partner split */
+  .partner-split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .partner-col-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .partner-a-label { color: var(--accent-text); }
+  .partner-b-label { color: var(--warm-text); }
+  .partner-a .grat-num { background: var(--accent-bg); color: var(--accent-text); }
+  .partner-b .grat-num { background: var(--warm-bg); color: var(--warm-text); }
+
+  /* Reminder section */
+  .reminder-card { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 14px; }
+  .reminder-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .reminder-icon { font-size: 20px; color: var(--green); }
+
+  /* Settings */
+  .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-label { font-size: 13px; font-weight: 500; color: var(--text); }
+  .settings-desc { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--text);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.2s;
+    z-index: 100;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    display: none;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    width: 480px;
+    max-width: calc(100vw - 48px);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .modal-sub { font-size: 13px; color: var(--text-3); margin-bottom: 18px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+
+  .spin { display: inline-block; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-3); }
+  .empty-state i { font-size: 32px; margin-bottom: 10px; opacity: 0.4; }
+  .empty-state p { font-size: 13px; }
+
+  .row { display: flex; gap: 10px; }
+  .row .btn { flex-shrink: 0; }
+
+  /* Responsive tweaks */
+  @media (max-width: 700px) {
+    .sidebar { width: 52px; }
+    .sidebar .nav-item span, .sidebar-header p, .logo-sub, .partner-switcher, .nav-section-label, .sidebar-footer .next-checkin-days, .sidebar-footer .next-checkin-label { display: none; }
+    .logo { font-size: 16px; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .partner-split { grid-template-columns: 1fr; }
+    .history-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">us<span>.</span></div>
+      <div class="logo-sub">relationship check-in</div>
+    </div>
+
+    <div class="partner-switcher">
+      <button class="partner-btn active" id="btn-partnerA" onclick="setPartner('A')">
+        <span id="partner-a-initial">A</span>
+      </button>
+      <button class="partner-btn" id="btn-partnerB" onclick="setPartner('B')">
+        <span id="partner-b-initial">B</span>
+      </button>
+    </div>
+
+    <div class="nav-section-label">Main</div>
+    <button class="nav-item active" onclick="showView('dashboard',this)">
+      <i class="ti ti-layout-dashboard"></i> <span>Dashboard</span>
+    </button>
+    <button class="nav-item" onclick="showView('checkin',this)">
+      <i class="ti ti-edit"></i> <span>New check-in</span>
+    </button>
+    <button class="nav-item" onclick="showView('actions',this)">
+      <i class="ti ti-checkbox"></i> <span>Action items</span>
+      <span class="badge" id="open-badge">0</span>
+    </button>
+
+    <div class="nav-section-label">Reflect</div>
+    <button class="nav-item" onclick="showView('history',this)">
+      <i class="ti ti-history"></i> <span>History</span>
+    </button>
+    <button class="nav-item" onclick="showView('growth',this)">
+      <i class="ti ti-plant"></i> <span>Growth log</span>
+    </button>
+
+    <div class="nav-section-label">Setup</div>
+    <button class="nav-item" onclick="showView('settings',this)">
+      <i class="ti ti-settings"></i> <span>Settings</span>
+    </button>
+
+    <div class="sidebar-footer">
+      <div class="next-checkin-label">Next check-in</div>
+      <div class="next-checkin-date" id="sidebar-next-date">—</div>
+      <div class="next-checkin-days" id="sidebar-next-days"></div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1 id="topbar-title">Dashboard</h1>
+        <p id="topbar-sub">your relationship at a glance</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-sm" onclick="exportPDF()"><i class="ti ti-download"></i> Export PDF</button>
+        <button class="btn btn-primary btn-sm" onclick="showView('checkin', document.querySelector('[onclick*=\"checkin\"]'))">
+          <i class="ti ti-plus"></i> Start check-in
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="view active" id="view-dashboard">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">Check-ins</div>
+            <div class="stat-val" id="stat-total">0</div>
+            <div class="stat-hint">sessions completed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Open actions</div>
+            <div class="stat-val" id="stat-open">0</div>
+            <div class="stat-hint">carry forward</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Gratitudes</div>
+            <div class="stat-val" id="stat-grats">0</div>
+            <div class="stat-hint">logged in total</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Next session</div>
+            <div class="stat-val" id="stat-days" style="font-size:20px;">—</div>
+            <div class="stat-hint">days away</div>
+          </div>
+        </div>
+
+        <div id="dash-last-summary" style="display:none;">
+          <div class="sec-label">Last session</div>
+          <div class="card" id="dash-summary-card"></div>
+        </div>
+
+        <div class="sec-label">Quick note for next session</div>
+        <div class="card">
+          <div class="field">
+            <textarea id="quick-note" placeholder="Something on your mind to bring up next time..." rows="2"></textarea>
+          </div>
+          <button class="btn btn-sm" onclick="saveQuickNote()"><i class="ti ti-check"></i> Save note</button>
+        </div>
+
+        <div id="saved-notes-list"></div>
+
+        <div id="dash-empty" class="empty-state" style="display:none;">
+          <i class="ti ti-heart"></i>
+          <p>No check-ins yet.<br>Start your first one to build your history.</p>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="showView('checkin', document.querySelectorAll('.nav-item')[1])">
+            <i class="ti ti-plus"></i> Start first check-in
+          </button>
+        </div>
+      </div>
+
+      <!-- CHECK-IN -->
+      <div class="view" id="view-checkin">
+
+        <div class="card" style="background: var(--accent-bg); border-color: var(--accent-border);">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+            <div>
+              <div style="font-size:13px; font-weight:600; color: var(--accent-text);">Check-in date</div>
+              <div style="font-size:12px; color:var(--text-3); margin-top:2px;">Fill in both partners, then save together</div>
+            </div>
+            <input type="date" id="checkin-date" style="width:auto;" />
+          </div>
+        </div>
+
+        <!-- Gratitudes — split view -->
+        <div class="sec-label">✦ Gratitudes</div>
+        <div class="partner-split">
+          <div class="partner-a">
+            <div class="partner-col-label partner-a-label">
+              <i class="ti ti-heart" style="font-size:14px;"></i>
+              <span id="label-partner-a">Partner A</span>
+            </div>
+            <div class="grat-row"><span class="grat-num">1</span><input class="grat-input" type="text" placeholder="I appreciate..." data-partner="A" data-i="0"></div>
+            <div class="grat-row"><span class="grat-num">2</span><input class="grat-input" type="text" placeholder="I appreciate..." data-partner="A" data-i="1"></div>
+            <div class="grat-row"><span class="grat-num">3</span><input class="grat-input" type="text" placeholder="I appreciate..." data-partner="A" data-i="2"></div>
+          </div>
+          <div class="partner-b">
+            <div class="partner-col-label partner-b-label">
+              <i class="ti ti-heart" style="font-size:14px;"></i>
+              <span id="label-partner-b">Partner B</span>
+            </div>
+            <div class="grat-row" style="background:var(--warm-bg); border-color:var(--warm-border);"><span class="grat-num" style="background:var(--warm-bg); color:var(--warm-text);">1</span><input class="grat-input" type="text" placeholder="I appreciate..." data-partner="B" data-i="0"></div>
+            <div class="grat-row" style="background:var(--warm-bg); border-color:var(--warm-border);"><span class="grat-num" style="background:var(--warm-bg); color:var(--warm-text);">2</span><input class="grat-input" type="text" placeholder="I appreciate..." data-partner="B" data-i="1"></div>
+            <div class="grat-row" style="background:var(--warm-bg); border-color:var(--warm-border);"><span class="grat-num" style="background:var(--warm-bg); color:var(--warm-text);">3</span><input class="grat-input" type="text" placeholder="I appreciate..." data-partner="B" data-i="2"></div>
+          </div>
+        </div>
+
+        <!-- Wins -->
+        <div class="sec-label">✦ Reflection</div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon" style="background:var(--green-bg);"><i class="ti ti-trophy" style="font-size:16px; color:var(--green);"></i></div>
+            <div><div class="card-title">Wins & highlights</div><div class="card-desc">What went well since the last check-in?</div></div>
+          </div>
+          <textarea id="f-wins" placeholder="e.g. We had a really connected weekend, navigated a tough work week well together..."></textarea>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon" style="background:var(--warm-bg);"><i class="ti ti-flame" style="font-size:16px; color:var(--warm);"></i></div>
+            <div><div class="card-title">Tensions or friction</div><div class="card-desc">Anything that felt off or unresolved? Name it without blame.</div></div>
+          </div>
+          <textarea id="f-friction" placeholder="e.g. I felt a bit disconnected on Tuesday — would love to talk about evenings together..."></textarea>
+        </div>
+
+        <!-- Growth -->
+        <div class="sec-label">✦ Growth</div>
+        <div class="partner-split">
+          <div>
+            <div class="partner-col-label partner-a-label"><i class="ti ti-bulb" style="font-size:14px;"></i> <span id="label-learned-a">Partner A</span> — something learned</div>
+            <textarea id="f-learned-a" placeholder="A book, idea, insight, or shift in perspective..."></textarea>
+          </div>
+          <div>
+            <div class="partner-col-label partner-b-label"><i class="ti ti-bulb" style="font-size:14px;"></i> <span id="label-learned-b">Partner B</span> — something learned</div>
+            <textarea id="f-learned-b" placeholder="A book, idea, insight, or shift in perspective..."></textarea>
+          </div>
+        </div>
+
+        <div style="height:12px;"></div>
+
+        <div class="partner-split">
+          <div>
+            <div class="partner-col-label partner-a-label"><i class="ti ti-target" style="font-size:14px;"></i> <span id="label-goals-a">Partner A</span> — personal goals</div>
+            <textarea id="f-goals-a" placeholder="What are you working toward? Where do you want support?"></textarea>
+          </div>
+          <div>
+            <div class="partner-col-label partner-b-label"><i class="ti ti-target" style="font-size:14px;"></i> <span id="label-goals-b">Partner B</span> — personal goals</div>
+            <textarea id="f-goals-b" placeholder="What are you working toward? Where do you want support?"></textarea>
+          </div>
+        </div>
+
+        <!-- Alignment -->
+        <div class="sec-label">✦ Alignment</div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon" style="background:var(--accent-bg);"><i class="ti ti-compass" style="font-size:16px; color:var(--accent);"></i></div>
+            <div><div class="card-title">Shared goals & planning</div><div class="card-desc">Upcoming decisions, logistics, what you're building together</div></div>
+          </div>
+          <textarea id="f-shared" placeholder="e.g. Trip planning, budget review, family events to coordinate..."></textarea>
+        </div>
+
+        <!-- Actions -->
+        <div class="sec-label">✦ Action items</div>
+        <div class="card">
+          <div class="field-label">Commitments from this session</div>
+          <div id="new-action-list"></div>
+          <div class="row" style="margin-top:8px; gap:8px;">
+            <input type="text" id="new-action-text" placeholder="Who: what to do..." style="flex:1;">
+            <button class="btn btn-sm" onclick="addCheckinAction()"><i class="ti ti-plus"></i> Add</button>
+          </div>
+        </div>
+
+        <!-- AI + Save -->
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+          <button class="btn btn-primary" onclick="generateSummary()">
+            <i class="ti ti-sparkles"></i> Generate AI summary
+          </button>
+          <button class="btn" onclick="saveSession()">
+            <i class="ti ti-device-floppy"></i> Save session
+          </button>
+          <button class="btn" onclick="clearForm()">
+            <i class="ti ti-refresh"></i> Clear form
+          </button>
+        </div>
+
+        <div id="ai-summary-box" style="display:none;">
+          <div class="sec-label">AI summary</div>
+          <div class="ai-box">
+            <div class="ai-label"><i class="ti ti-sparkles" style="font-size:11px;"></i> generated summary</div>
+            <div id="ai-summary-text"></div>
+          </div>
+          <div style="margin-top:8px;">
+            <button class="btn btn-sm" onclick="copyAISummary()"><i class="ti ti-copy"></i> Copy</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="view" id="view-actions">
+        <div class="sec-label">Open items</div>
+        <div id="action-list-open"></div>
+
+        <div class="sec-label" style="margin-top:20px;">Completed</div>
+        <div id="action-list-done"></div>
+
+        <div class="divider"></div>
+        <div class="field-label">Add action item</div>
+        <div class="row" style="gap:8px;">
+          <input type="text" id="global-action-input" placeholder="e.g. Sam: book flights by July 15">
+          <button class="btn" onclick="addGlobalAction()"><i class="ti ti-plus"></i> Add</button>
+        </div>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="view" id="view-history">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+          <div class="sec-label" style="margin:0;">All sessions</div>
+          <button class="btn btn-sm" onclick="exportAllPDF()"><i class="ti ti-download"></i> Export all</button>
+        </div>
+        <div class="timeline" id="history-timeline">
+          <div class="empty-state">
+            <i class="ti ti-history"></i>
+            <p>No sessions yet. Complete your first check-in to see history here.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- GROWTH LOG -->
+      <div class="view" id="view-growth">
+        <div class="partner-split">
+          <div>
+            <div class="sec-label" id="growth-label-a">Partner A — things learned</div>
+            <div id="growth-learned-a">
+              <div class="empty-state" style="padding:20px;"><i class="ti ti-bulb"></i><p>No entries yet</p></div>
+            </div>
+          </div>
+          <div>
+            <div class="sec-label" id="growth-label-b">Partner B — things learned</div>
+            <div id="growth-learned-b">
+              <div class="empty-state" style="padding:20px;"><i class="ti ti-bulb"></i><p>No entries yet</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="partner-split">
+          <div>
+            <div class="sec-label" id="growth-goals-label-a">Partner A — goals over time</div>
+            <div id="growth-goals-a">
+              <div class="empty-state" style="padding:20px;"><i class="ti ti-target"></i><p>No goals yet</p></div>
+            </div>
+          </div>
+          <div>
+            <div class="sec-label" id="growth-goals-label-b">Partner B — goals over time</div>
+            <div id="growth-goals-b">
+              <div class="empty-state" style="padding:20px;"><i class="ti ti-target"></i><p>No goals yet</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="view" id="view-settings">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;">Partners</div>
+          <div class="settings-row">
+            <div><div class="settings-label">Partner A name</div></div>
+            <input type="text" id="set-name-a" placeholder="e.g. Sam" style="width:160px;">
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-label">Partner B name</div></div>
+            <input type="text" id="set-name-b" placeholder="e.g. Alex" style="width:160px;">
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;">Check-in schedule</div>
+          <div class="settings-row">
+            <div><div class="settings-label">Frequency</div><div class="settings-desc">How often you check in</div></div>
+            <select id="set-frequency" style="width:160px;">
+              <option value="14">Every 2 weeks</option>
+              <option value="21">Every 3 weeks</option>
+              <option value="28" selected>Every 4 weeks</option>
+              <option value="42">Every 6 weeks</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-label">Next check-in date</div></div>
+            <input type="date" id="set-next-date" style="width:160px;">
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Calendar reminder</div>
+              <div class="settings-desc">Download an .ics file to add to your calendar</div>
+            </div>
+            <button class="btn btn-sm" onclick="downloadICS()"><i class="ti ti-calendar"></i> Download .ics</button>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Email reminder</div>
+              <div class="settings-desc">Enter emails to receive a reminder before each session</div>
+            </div>
+          </div>
+          <div class="row" style="gap:8px; margin-top:4px;">
+            <input type="email" id="set-email-a" placeholder="Partner A email">
+            <input type="email" id="set-email-b" placeholder="Partner B email">
+          </div>
+          <div style="margin-top:8px; font-size:12px; color:var(--text-3);">Note: email reminders require a server — the .ics calendar download works immediately.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;">Data</div>
+          <div class="settings-row">
+            <div><div class="settings-label">Export all data</div><div class="settings-desc">Download a full PDF of all sessions</div></div>
+            <button class="btn btn-sm" onclick="exportAllPDF()"><i class="ti ti-download"></i> Export PDF</button>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-label">Clear all data</div><div class="settings-desc">Permanently delete all sessions and settings</div></div>
+            <button class="btn btn-danger btn-sm" onclick="clearAllData()"><i class="ti ti-trash"></i> Clear data</button>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="saveSettings()"><i class="ti ti-check"></i> Save settings</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Confirm modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Are you sure?</div>
+    <div class="modal-sub" id="modal-sub"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="modal-confirm-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let state = {
+  settings: { nameA: 'Partner A', nameB: 'Partner B', frequency: 28, nextDate: '', emailA: '', emailB: '' },
+  sessions: [],
+  actions: [],
+  quickNotes: [],
+  activePartner: 'A'
+};
+
+let checkinActions = [];
+
+// ── Storage ──
+function save() {
+  localStorage.setItem('us-crm', JSON.stringify(state));
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem('us-crm');
+    if (raw) state = { ...state, ...JSON.parse(raw) };
+  } catch(e) {}
+}
+
+// ── Init ──
+load();
+applySettings();
+renderDashboard();
+renderActions();
+renderHistory();
+renderGrowth();
+updateSidebarDate();
+setNextDateDefault();
+
+function setNextDateDefault() {
+  const d = document.getElementById('checkin-date');
+  if (d) d.value = new Date().toISOString().split('T')[0];
+}
+
+// ── Navigation ──
+const viewMeta = {
+  dashboard: ['Dashboard', 'your relationship at a glance'],
+  checkin: ['New check-in', 'bi-monthly session — fill in together'],
+  actions: ['Action items', 'carry forward between sessions'],
+  history: ['All sessions', 'your complete check-in history'],
+  growth: ['Growth log', 'what you\'ve learned and worked toward'],
+  settings: ['Settings', 'partners, schedule, and reminders']
+};
+
+function showView(id, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  const [title, sub] = viewMeta[id] || [id, ''];
+  document.getElementById('topbar-title').textContent = title;
+  document.getElementById('topbar-sub').textContent = sub;
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'actions') renderActions();
+  if (id === 'history') renderHistory();
+  if (id === 'growth') renderGrowth();
+  if (id === 'settings') loadSettingsForm();
+}
+
+// ── Partners ──
+function setPartner(p) {
+  state.activePartner = p;
+  document.getElementById('btn-partnerA').classList.toggle('active', p === 'A');
+  document.getElementById('btn-partnerB').classList.toggle('active', p === 'B');
+}
+
+function applySettings() {
+  const s = state.settings;
+  ['label-partner-a','label-learned-a','label-goals-a','growth-label-a','growth-goals-label-a'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = s.nameA || 'Partner A';
+  });
+  ['label-partner-b','label-learned-b','label-goals-b','growth-label-b','growth-goals-label-b'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = s.nameB || 'Partner B';
+  });
+  document.getElementById('btn-partnerA').querySelector('span').textContent = (s.nameA || 'A')[0].toUpperCase();
+  document.getElementById('btn-partnerB').querySelector('span').textContent = (s.nameB || 'B')[0].toUpperCase();
+  updateSidebarDate();
+}
+
+// ── Dashboard ──
+function renderDashboard() {
+  const sessions = state.sessions;
+  const actions = state.actions;
+  const openCount = actions.filter(a => !a.done).length;
+  const gratCount = sessions.reduce((n, s) => n + (s.gratsA?.filter(Boolean).length || 0) + (s.gratsB?.filter(Boolean).length || 0), 0);
+
+  document.getElementById('stat-total').textContent = sessions.length;
+  document.getElementById('stat-open').textContent = openCount;
+  document.getElementById('stat-grats').textContent = gratCount;
+  document.getElementById('open-badge').textContent = openCount;
+
+  const days = daysUntilNext();
+  document.getElementById('stat-days').textContent = days !== null ? days : '—';
+
+  const emptyEl = document.getElementById('dash-empty');
+  const summaryEl = document.getElementById('dash-last-summary');
+
+  if (sessions.length === 0) {
+    if (emptyEl) emptyEl.style.display = 'block';
+    if (summaryEl) summaryEl.style.display = 'none';
+  } else {
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (summaryEl) summaryEl.style.display = 'block';
+    const last = sessions[sessions.length - 1];
+    const card = document.getElementById('dash-summary-card');
+    if (card) {
+      card.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <i class="ti ti-calendar" style="font-size:15px; color:var(--accent);"></i>
+          <span style="font-size:13px; font-weight:600;">${formatDate(last.date)}</span>
+          <span style="font-size:12px; color:var(--text-3);">${last.gratsA?.filter(Boolean).length + last.gratsB?.filter(Boolean).length || 0} gratitudes · ${last.actions?.length || 0} action items</span>
+        </div>
+        ${last.aiSummary ? `<div style="font-size:13px; color:var(--text-2); line-height:1.7;">${last.aiSummary}</div>` : `<div style="font-size:13px; color:var(--text-3);">No AI summary generated for this session.</div>`}
+      `;
+    }
+  }
+
+  // Quick notes
+  const notesEl = document.getElementById('saved-notes-list');
+  if (notesEl && state.quickNotes?.length) {
+    notesEl.innerHTML = `
+      <div class="sec-label">Notes for next session</div>
+      ${state.quickNotes.map((n, i) => `
+        <div class="card" style="display:flex; align-items:flex-start; gap:10px; padding:10px 14px;">
+          <i class="ti ti-note" style="font-size:15px; color:var(--accent); margin-top:1px;"></i>
+          <div style="flex:1; font-size:13px; color:var(--text-2);">${n}</div>
+          <button class="action-del" onclick="deleteNote(${i})"><i class="ti ti-x"></i></button>
+        </div>
+      `).join('')}
+    `;
+  } else if (notesEl) {
+    notesEl.innerHTML = '';
+  }
+}
+
+function saveQuickNote() {
+  const val = document.getElementById('quick-note').value.trim();
+  if (!val) return;
+  state.quickNotes = state.quickNotes || [];
+  state.quickNotes.push(val);
+  document.getElementById('quick-note').value = '';
+  save();
+  renderDashboard();
+  toast('Note saved');
+}
+
+function deleteNote(i) {
+  state.quickNotes.splice(i, 1);
+  save();
+  renderDashboard();
+}
+
+// ── Check-in form ──
+let pendingActions = [];
+
+function addCheckinAction() {
+  const inp = document.getElementById('new-action-text');
+  const val = inp.value.trim();
+  if (!val) return;
+  pendingActions.push({ text: val, done: false, id: Date.now() + Math.random() });
+  inp.value = '';
+  renderPendingActions();
+}
+
+function renderPendingActions() {
+  const list = document.getElementById('new-action-list');
+  if (!list) return;
+  list.innerHTML = pendingActions.map((a, i) => `
+    <div class="action-item">
+      <span class="action-text">${a.text}</span>
+      <button class="action-del" onclick="removePending(${i})"><i class="ti ti-x"></i></button>
+    </div>
+  `).join('') || '';
+}
+
+function removePending(i) {
+  pendingActions.splice(i, 1);
+  renderPendingActions();
+}
+
+async function generateSummary() {
+  const wins = document.getElementById('f-wins').value;
+  const friction = document.getElementById('f-friction').value;
+  const learnedA = document.getElementById('f-learned-a').value;
+  const learnedB = document.getElementById('f-learned-b').value;
+  const goalsA = document.getElementById('f-goals-a').value;
+  const goalsB = document.getElementById('f-goals-b').value;
+  const shared = document.getElementById('f-shared').value;
+  const gratsA = Array.from(document.querySelectorAll('[data-partner="A"]')).map(i => i.value).filter(Boolean);
+  const gratsB = Array.from(document.querySelectorAll('[data-partner="B"]')).map(i => i.value).filter(Boolean);
+  const s = state.settings;
+
+  if (!wins && !friction && !learnedA && !learnedB && !goalsA && !goalsB && !shared && !gratsA.length && !gratsB.length) {
+    toast('Fill in at least one section first'); return;
+  }
+
+  const box = document.getElementById('ai-summary-box');
+  const textEl = document.getElementById('ai-summary-text');
+  box.style.display = 'block';
+  textEl.innerHTML = '<span class="spin">↻</span> Generating...';
+
+  const prompt = `You are a warm, insightful relationship coach summarizing a couple's bi-monthly check-in. Write a 3–4 sentence summary that is warm, specific, and constructive. Highlight what's going well, acknowledge the key tension without judgment, and note anything meaningful from their growth sections. Keep under 90 words.
+
+${s.nameA || 'Partner A'} gratitudes: ${gratsA.join('; ') || 'none'}
+${s.nameB || 'Partner B'} gratitudes: ${gratsB.join('; ') || 'none'}
+Wins: ${wins || 'not filled'}
+Tensions: ${friction || 'not filled'}
+${s.nameA || 'Partner A'} learned: ${learnedA || 'not filled'}
+${s.nameB || 'Partner B'} learned: ${learnedB || 'not filled'}
+${s.nameA || 'Partner A'} goals: ${goalsA || 'not filled'}
+${s.nameB || 'Partner B'} goals: ${goalsB || 'not filled'}
+Shared plans: ${shared || 'not filled'}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.find(b => b.type === 'text')?.text || 'Could not generate summary.';
+    textEl.textContent = text;
+    textEl.dataset.summary = text;
+  } catch(e) {
+    textEl.textContent = 'Something went wrong — check your connection and try again.';
+  }
+}
+
+function copyAISummary() {
+  const text = document.getElementById('ai-summary-text').textContent;
+  navigator.clipboard?.writeText(text);
+  toast('Summary copied');
+}
+
+function saveSession() {
+  const dateVal = document.getElementById('checkin-date').value;
+  if (!dateVal) { toast('Please set a check-in date'); return; }
+
+  const gratsA = Array.from(document.querySelectorAll('[data-partner="A"]')).map(i => i.value);
+  const gratsB = Array.from(document.querySelectorAll('[data-partner="B"]')).map(i => i.value);
+  const summaryText = document.getElementById('ai-summary-text')?.dataset?.summary || '';
+
+  const session = {
+    id: Date.now(),
+    date: dateVal,
+    gratsA,
+    gratsB,
+    wins: document.getElementById('f-wins').value,
+    friction: document.getElementById('f-friction').value,
+    learnedA: document.getElementById('f-learned-a').value,
+    learnedB: document.getElementById('f-learned-b').value,
+    goalsA: document.getElementById('f-goals-a').value,
+    goalsB: document.getElementById('f-goals-b').value,
+    shared: document.getElementById('f-shared').value,
+    actions: [...pendingActions],
+    aiSummary: summaryText
+  };
+
+  state.sessions.push(session);
+
+  // Add actions to global list
+  pendingActions.forEach(a => state.actions.push({ ...a, sessionDate: dateVal, id: Date.now() + Math.random() }));
+
+  // Advance next date
+  if (state.settings.nextDate) {
+    const next = new Date(state.settings.nextDate);
+    next.setDate(next.getDate() + parseInt(state.settings.frequency || 28));
+    state.settings.nextDate = next.toISOString().split('T')[0];
+  }
+
+  save();
+  clearForm();
+  pendingActions = [];
+  renderActions();
+  updateSidebarDate();
+  toast('Session saved ✓');
+  showView('dashboard', document.querySelector('.nav-item'));
+}
+
+function clearForm() {
+  ['f-wins','f-friction','f-learned-a','f-learned-b','f-goals-a','f-goals-b','f-shared'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.querySelectorAll('.grat-input').forEach(i => i.value = '');
+  document.getElementById('ai-summary-box').style.display = 'none';
+  pendingActions = [];
+  renderPendingActions();
+  setNextDateDefault();
+}
+
+// ── Actions ──
+function renderActions() {
+  const open = state.actions.filter(a => !a.done);
+  const done = state.actions.filter(a => a.done);
+  document.getElementById('open-badge').textContent = open.length;
+
+  const renderList = (items, elId) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    if (!items.length) {
+      el.innerHTML = `<div class="empty-state" style="padding:16px;"><p>${elId.includes('open') ? 'No open items — nice work!' : 'No completed items yet.'}</p></div>`;
+      return;
+    }
+    el.innerHTML = items.map(a => `
+      <div class="action-item">
+        <input type="checkbox" ${a.done ? 'checked' : ''} onchange="toggleAction('${a.id}', this.checked)">
+        <span class="action-text ${a.done ? 'done' : ''}">${a.text}</span>
+        ${a.sessionDate ? `<span class="action-owner">${formatDate(a.sessionDate)}</span>` : ''}
+        <span class="tag ${a.done ? 'tag-done' : 'tag-pending'}">${a.done ? 'done' : 'pending'}</span>
+        <button class="action-del" onclick="deleteAction('${a.id}')"><i class="ti ti-trash"></i></button>
+      </div>
+    `).join('');
+  };
+
+  renderList(open, 'action-list-open');
+  renderList(done, 'action-list-done');
+}
+
+function toggleAction(id, checked) {
+  const a = state.actions.find(a => String(a.id) === String(id));
+  if (a) { a.done = checked; save(); renderActions(); }
+}
+
+function deleteAction(id) {
+  state.actions = state.actions.filter(a => String(a.id) !== String(id));
+  save(); renderActions();
+}
+
+function addGlobalAction() {
+  const inp = document.getElementById('global-action-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  state.actions.push({ id: Date.now() + Math.random(), text: val, done: false });
+  inp.value = '';
+  save(); renderActions();
+  toast('Action item added');
+}
+
+// ── History ──
+function renderHistory() {
+  const el = document.getElementById('history-timeline');
+  if (!el) return;
+  if (!state.sessions.length) {
+    el.innerHTML = `<div class="empty-state"><i class="ti ti-history"></i><p>No sessions yet. Complete your first check-in to see history here.</p></div>`;
+    return;
+  }
+  const s = state.settings;
+  el.innerHTML = [...state.sessions].reverse().map((session, idx) => {
+    const gratTotal = (session.gratsA?.filter(Boolean).length || 0) + (session.gratsB?.filter(Boolean).length || 0);
+    return `
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card" onclick="toggleExpand('hist-${idx}')">
+        <div class="timeline-meta">
+          <span class="timeline-date">${formatDate(session.date)}</span>
+          ${gratTotal ? `<span class="timeline-chip">${gratTotal} gratitudes</span>` : ''}
+          ${session.actions?.length ? `<span class="timeline-chip">${session.actions.length} actions</span>` : ''}
+        </div>
+        ${session.aiSummary ? `<div class="timeline-summary">${session.aiSummary}</div>` : ''}
+        <div class="timeline-expand" id="hist-${idx}">
+          ${session.wins ? `<div class="history-field" style="margin-top:10px;"><div class="history-field-label">Wins</div><div class="history-field-val">${session.wins}</div></div>` : ''}
+          ${session.friction ? `<div class="history-field" style="margin-top:8px;"><div class="history-field-label">Tensions</div><div class="history-field-val">${session.friction}</div></div>` : ''}
+          <div class="history-grid">
+            ${session.learnedA ? `<div class="history-field"><div class="history-field-label">${s.nameA || 'A'} learned</div><div class="history-field-val">${session.learnedA}</div></div>` : ''}
+            ${session.learnedB ? `<div class="history-field"><div class="history-field-label">${s.nameB || 'B'} learned</div><div class="history-field-val">${session.learnedB}</div></div>` : ''}
+            ${session.goalsA ? `<div class="history-field"><div class="history-field-label">${s.nameA || 'A'} goals</div><div class="history-field-val">${session.goalsA}</div></div>` : ''}
+            ${session.goalsB ? `<div class="history-field"><div class="history-field-label">${s.nameB || 'B'} goals</div><div class="history-field-val">${session.goalsB}</div></div>` : ''}
+          </div>
+          ${session.gratsA?.filter(Boolean).length ? `
+            <div class="history-field" style="margin-top:8px;">
+              <div class="history-field-label">${s.nameA || 'A'} gratitudes</div>
+              <div class="history-field-val">${session.gratsA.filter(Boolean).join(' · ')}</div>
+            </div>` : ''}
+          ${session.gratsB?.filter(Boolean).length ? `
+            <div class="history-field" style="margin-top:8px;">
+              <div class="history-field-label">${s.nameB || 'B'} gratitudes</div>
+              <div class="history-field-val">${session.gratsB.filter(Boolean).join(' · ')}</div>
+            </div>` : ''}
+          <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-sm" onclick="event.stopPropagation(); exportSessionPDF(${state.sessions.length - 1 - idx})"><i class="ti ti-download"></i> Export PDF</button>
+            <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteSession(${state.sessions.length - 1 - idx})"><i class="ti ti-trash"></i> Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleExpand(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+
+function deleteSession(idx) {
+  showModal('Delete session', 'This session and its data will be permanently deleted.', () => {
+    state.sessions.splice(idx, 1);
+    save(); renderHistory(); renderDashboard();
+    toast('Session deleted');
+  });
+}
+
+// ── Growth ──
+function renderGrowth() {
+  const s = state.settings;
+  const sessions = state.sessions;
+
+  const renderEntries = (entries, elId) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const filtered = entries.filter(Boolean);
+    if (!filtered.length) {
+      el.innerHTML = `<div class="empty-state" style="padding:16px;"><i class="ti ti-bulb"></i><p>No entries yet</p></div>`;
+      return;
+    }
+    el.innerHTML = filtered.map(e => `
+      <div class="growth-entry">
+        <div class="growth-date">${e.date}</div>
+        <div class="growth-text">${e.text}</div>
+      </div>
+    `).join('');
+  };
+
+  const learnedA = sessions.filter(s => s.learnedA).map(s => ({ date: formatDate(s.date), text: s.learnedA })).reverse();
+  const learnedB = sessions.filter(s => s.learnedB).map(s => ({ date: formatDate(s.date), text: s.learnedB })).reverse();
+  const goalsA = sessions.filter(s => s.goalsA).map(s => ({ date: formatDate(s.date), text: s.goalsA })).reverse();
+  const goalsB = sessions.filter(s => s.goalsB).map(s => ({ date: formatDate(s.date), text: s.goalsB })).reverse();
+
+  renderEntries(learnedA, 'growth-learned-a');
+  renderEntries(learnedB, 'growth-learned-b');
+  renderEntries(goalsA, 'growth-goals-a');
+  renderEntries(goalsB, 'growth-goals-b');
+
+  // Update labels
+  const el = document.getElementById('growth-label-a');
+  if (el) el.textContent = (s.nameA || 'Partner A') + ' — things learned';
+  const el2 = document.getElementById('growth-label-b');
+  if (el2) el2.textContent = (s.nameB || 'Partner B') + ' — things learned';
+  const el3 = document.getElementById('growth-goals-label-a');
+  if (el3) el3.textContent = (s.nameA || 'Partner A') + ' — goals over time';
+  const el4 = document.getElementById('growth-goals-label-b');
+  if (el4) el4.textContent = (s.nameB || 'Partner B') + ' — goals over time';
+}
+
+// ── Settings ──
+function loadSettingsForm() {
+  const s = state.settings;
+  document.getElementById('set-name-a').value = s.nameA || '';
+  document.getElementById('set-name-b').value = s.nameB || '';
+  document.getElementById('set-frequency').value = s.frequency || 28;
+  document.getElementById('set-next-date').value = s.nextDate || '';
+  document.getElementById('set-email-a').value = s.emailA || '';
+  document.getElementById('set-email-b').value = s.emailB || '';
+}
+
+function saveSettings() {
+  state.settings.nameA = document.getElementById('set-name-a').value || 'Partner A';
+  state.settings.nameB = document.getElementById('set-name-b').value || 'Partner B';
+  state.settings.frequency = parseInt(document.getElementById('set-frequency').value) || 28;
+  state.settings.nextDate = document.getElementById('set-next-date').value;
+  state.settings.emailA = document.getElementById('set-email-a').value;
+  state.settings.emailB = document.getElementById('set-email-b').value;
+  save();
+  applySettings();
+  toast('Settings saved ✓');
+}
+
+function updateSidebarDate() {
+  const el = document.getElementById('sidebar-next-date');
+  const el2 = document.getElementById('sidebar-next-days');
+  if (!state.settings.nextDate) {
+    if (el) el.textContent = 'Not set';
+    if (el2) el2.textContent = 'Set in settings';
+    return;
+  }
+  if (el) el.textContent = formatDate(state.settings.nextDate);
+  const days = daysUntilNext();
+  if (el2) el2.textContent = days !== null ? `${days} days away` : '';
+}
+
+function daysUntilNext() {
+  if (!state.settings.nextDate) return null;
+  const next = new Date(state.settings.nextDate);
+  const now = new Date();
+  const diff = Math.round((next - now) / (1000 * 60 * 60 * 24));
+  return diff;
+}
+
+// ── Calendar .ics ──
+function downloadICS() {
+  const nextDate = state.settings.nextDate;
+  if (!nextDate) { toast('Set a next check-in date in settings first'); return; }
+  const d = new Date(nextDate);
+  const fmt = (d) => d.toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z';
+  const end = new Date(d); end.setHours(d.getHours() + 1);
+  const s = state.settings;
+
+  const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//us. CRM//EN\nBEGIN:VEVENT\nUID:us-crm-${Date.now()}@relationship\nDTSTART:${fmt(d)}\nDTEND:${fmt(end)}\nSUMMARY:us. check-in — ${s.nameA || 'Partner A'} & ${s.nameB || 'Partner B'}\nDESCRIPTION:Bi-monthly relationship check-in. Bring your gratitudes!\nBEGIN:VALARM\nTRIGGER:-PT1D\nACTION:DISPLAY\nDESCRIPTION:Tomorrow: us. check-in with ${s.nameA || 'your partner'}\nEND:VALARM\nEND:VEVENT\nEND:VCALENDAR`;
+
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'us-checkin.ics'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Calendar file downloaded');
+}
+
+// ── PDF Export ──
+function exportSessionPDF(idx) {
+  const session = state.sessions[idx];
+  if (!session) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const s = state.settings;
+  let y = 20;
+  const lh = 7;
+  const margin = 20;
+  const pageW = 210;
+  const maxW = pageW - margin * 2;
+
+  const addText = (text, size, bold, color) => {
+    doc.setFontSize(size || 11);
+    doc.setFont('helvetica', bold ? 'bold' : 'normal');
+    doc.setTextColor(...(color || [30, 30, 30]));
+    const lines = doc.splitTextToSize(String(text || ''), maxW);
+    if (y + lines.length * lh > 270) { doc.addPage(); y = 20; }
+    doc.text(lines, margin, y);
+    y += lines.length * lh + 2;
+  };
+
+  const addLabel = (label) => {
+    y += 3;
+    doc.setFillColor(240, 238, 255);
+    doc.roundedRect(margin, y - 4, maxW, 8, 2, 2, 'F');
+    addText(label, 9, true, [80, 60, 200]);
+    y += 1;
+  };
+
+  addText('us.', 28, true, [100, 80, 220]);
+  addText(`Check-in — ${formatDate(session.date)}`, 13, false, [100, 100, 100]);
+  addText(`${s.nameA || 'Partner A'} & ${s.nameB || 'Partner B'}`, 11, false, [150, 140, 180]);
+  y += 5;
+
+  if (session.aiSummary) {
+    addLabel('Summary');
+    addText(session.aiSummary, 11);
+    y += 3;
+  }
+
+  const gratsA = session.gratsA?.filter(Boolean);
+  const gratsB = session.gratsB?.filter(Boolean);
+  if (gratsA?.length || gratsB?.length) {
+    addLabel('Gratitudes');
+    if (gratsA?.length) {
+      addText(`${s.nameA || 'Partner A'}:`, 10, true, [80, 80, 80]);
+      gratsA.forEach(g => addText(`• ${g}`, 10));
+    }
+    if (gratsB?.length) {
+      addText(`${s.nameB || 'Partner B'}:`, 10, true, [80, 80, 80]);
+      gratsB.forEach(g => addText(`• ${g}`, 10));
+    }
+    y += 2;
+  }
+
+  if (session.wins) { addLabel('Wins & highlights'); addText(session.wins, 11); y += 2; }
+  if (session.friction) { addLabel('Tensions / friction'); addText(session.friction, 11); y += 2; }
+  if (session.learnedA) { addLabel(`${s.nameA || 'A'} — something learned`); addText(session.learnedA, 11); y += 2; }
+  if (session.learnedB) { addLabel(`${s.nameB || 'B'} — something learned`); addText(session.learnedB, 11); y += 2; }
+  if (session.goalsA) { addLabel(`${s.nameA || 'A'} — personal goals`); addText(session.goalsA, 11); y += 2; }
+  if (session.goalsB) { addLabel(`${s.nameB || 'B'} — personal goals`); addText(session.goalsB, 11); y += 2; }
+  if (session.shared) { addLabel('Shared goals & planning'); addText(session.shared, 11); y += 2; }
+
+  if (session.actions?.length) {
+    addLabel('Action items');
+    session.actions.forEach(a => addText(`☐  ${a.text}`, 11));
+  }
+
+  doc.save(`us-checkin-${session.date}.pdf`);
+  toast('PDF downloaded');
+}
+
+function exportPDF() {
+  const sessions = state.sessions;
+  if (!sessions.length) { toast('No sessions to export'); return; }
+  exportSessionPDF(sessions.length - 1);
+}
+
+function exportAllPDF() {
+  const sessions = state.sessions;
+  if (!sessions.length) { toast('No sessions to export'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const s = state.settings;
+  const margin = 20;
+  const maxW = 210 - margin * 2;
+  const lh = 7;
+  let isFirst = true;
+
+  sessions.forEach((session, idx) => {
+    if (!isFirst) doc.addPage();
+    isFirst = false;
+    let y = 20;
+
+    const addText = (text, size, bold, color) => {
+      doc.setFontSize(size || 11);
+      doc.setFont('helvetica', bold ? 'bold' : 'normal');
+      doc.setTextColor(...(color || [30,30,30]));
+      const lines = doc.splitTextToSize(String(text || ''), maxW);
+      if (y + lines.length * lh > 270) { doc.addPage(); y = 20; }
+      doc.text(lines, margin, y);
+      y += lines.length * lh + 2;
+    };
+
+    const addLabel = (label) => {
+      y += 3;
+      doc.setFillColor(240, 238, 255);
+      doc.roundedRect(margin, y - 4, maxW, 8, 2, 2, 'F');
+      addText(label, 9, true, [80, 60, 200]);
+      y += 1;
+    };
+
+    addText('us.', 22, true, [100, 80, 220]);
+    addText(`Check-in — ${formatDate(session.date)}`, 13, false, [100,100,100]);
+    y += 4;
+    if (session.aiSummary) { addLabel('Summary'); addText(session.aiSummary, 11); y += 2; }
+    if (session.wins) { addLabel('Wins'); addText(session.wins, 11); y += 2; }
+    if (session.friction) { addLabel('Tensions'); addText(session.friction, 11); y += 2; }
+    if (session.learnedA || session.learnedB) {
+      addLabel('Something learned');
+      if (session.learnedA) addText(`${s.nameA || 'A'}: ${session.learnedA}`, 11);
+      if (session.learnedB) addText(`${s.nameB || 'B'}: ${session.learnedB}`, 11);
+      y += 2;
+    }
+  });
+
+  doc.save(`us-all-sessions.pdf`);
+  toast('Full export downloaded');
+}
+
+// ── Data ──
+function clearAllData() {
+  showModal('Clear all data', 'This will permanently delete all sessions, actions, and settings. This cannot be undone.', () => {
+    localStorage.removeItem('us-crm');
+    state = { settings: { nameA: 'Partner A', nameB: 'Partner B', frequency: 28, nextDate: '', emailA: '', emailB: '' }, sessions: [], actions: [], quickNotes: [], activePartner: 'A' };
+    applySettings(); renderDashboard(); renderActions(); renderHistory(); renderGrowth(); updateSidebarDate();
+    toast('All data cleared');
+  });
+}
+
+// ── Modal ──
+function showModal(title, sub, onConfirm) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-sub').textContent = sub;
+  document.getElementById('modal-confirm-btn').onclick = () => { closeModal(); onConfirm(); };
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+// ── Toast ──
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.innerHTML = `<i class="ti ti-check" style="font-size:14px;"></i> ${msg}`;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ── Utils ──
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
